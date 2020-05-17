@@ -26,7 +26,7 @@ TRAINING_FOLDER = 'D:/Kepler_Data/Kepler_Training_Data'
 
 # Folder to save the trained model
 # Including training logs and checkpoints
-KEPLER_TRAINED_MODEL_FOLDER = 'D:/Kepler_Data/K_Trained_Model'
+KEPLER_TRAINED_MODEL_FOLDER = r'D:\Kepler_Data\K_Trained_Model'
 
 # ==== May not needed =====
 # Folder for all other Kepler data besides the training data set
