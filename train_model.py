@@ -98,7 +98,7 @@ def tce_generator(data_folder, data_type, batch_size):
     print(class_list)
 
     while 1:
-        X1, X2, y = [], [], []
+        X1,  y = [], []
 
         # Generate batch_size samples.
         for _ in range(batch_size):
@@ -126,11 +126,9 @@ def tce_generator(data_folder, data_type, batch_size):
             # But looks like I still have to reshape them again after
             # reading from file.
             global_view = np.reshape(global_view, (2001, 1))
-            local_view = np.reshape(local_view, (201, 1))
 
             # X.append(result_X)
             X1.append(global_view)
-            X2.append(local_view)
 
             # Get the class index
             label_encoded = class_list.index(selected_class)
@@ -138,7 +136,7 @@ def tce_generator(data_folder, data_type, batch_size):
 
             y.append(label_hot)
 
-        yield [np.array(X1), np.array(X2)], np.array(y)
+        yield np.array(X1), np.array(y)
 
 
 def main():
@@ -206,12 +204,12 @@ def main():
             workers=24)
 
         trained_model_filename = os.path.join(
-            environment.KEPLER_TRAINED_MODEL_FOLDER, 'kepler-model-two-classes.h5')
+            environment.KEPLER_TRAINED_MODEL_FOLDER, 'kepler-model.h5')
         model.save_weights(trained_model_filename)
     else:
         # Load the existing trained model
         trained_model_filename = os.path.join(
-            environment.KEPLER_TRAINED_MODEL_FOLDER, 'kepler-model-two-classes.h5')
+            environment.KEPLER_TRAINED_MODEL_FOLDER, 'kepler-model.h5')
 
         if os.path.isfile(trained_model_filename):
             model.load_weights(trained_model_filename)
@@ -237,19 +235,17 @@ def main():
 
         for record_file in sample_list:
             result_X = []
-            X1, X2 = [], []
+            X1 = []
 
             dest_file = os.path.join(class_folder, record_file)
             global_view, local_view = training_data_io.read_tce_global_view_local_view_from_file(
                 dest_file)
 
             global_view = np.reshape(global_view, (2001, 1))
-            local_view = np.reshape(local_view, (201, 1))
 
             X1.append(global_view)
-            X2.append(local_view)
 
-            result_X = [np.array(X1), np.array(X2)]
+            result_X = np.array(X1)
 
             predict_correct = False
 
