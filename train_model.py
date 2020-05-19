@@ -8,6 +8,7 @@ import random
 import threading
 import time
 import os.path
+import datetime
 
 import Kepler_model
 import environment
@@ -41,7 +42,7 @@ K.set_session(session)
 
 # Training parameters
 BATCH_SIZE = 32
-NB_EPOCH = 200
+NB_EPOCH = 50
 
 # How many times allowed when val_loss didn't decrease
 TRAIN_patience = 30
@@ -122,9 +123,7 @@ def tce_generator(data_folder, data_type, batch_size):
             global_view, local_view = training_data_io.read_tce_global_view_local_view_from_file(
                 dest_file)
 
-            # Upon saving the data to file I have already reshaped them.
-            # But looks like I still have to reshape them again after
-            # reading from file.
+            # Why do I need to reshape this ffs
             global_view = np.reshape(global_view, (2001, 1))
 
             # X.append(result_X)
@@ -167,7 +166,7 @@ def main():
 
         # Helper: TensorBoard
         tb = TensorBoard(log_dir=os.path.join(
-            environment.KEPLER_TRAINED_MODEL_FOLDER, 'logs', 'CNN'))
+            environment.KEPLER_TRAINED_MODEL_FOLDER, 'logs', 'CNN'), histogram_freq=0, write_images=True)
 
         # Helper: Stop when we stop learning.
         early_stopper = EarlyStopping(patience=TRAIN_patience)
@@ -191,6 +190,7 @@ def main():
         train_generator = tce_generator(train_set_folder, 'Train', BATCH_SIZE)
         val_generator = tce_generator(
             validation_set_folder, 'Validation', BATCH_SIZE)
+        # Tensorboard for monitoring
 
         # Perform the training now!
         model.fit_generator(
@@ -198,7 +198,8 @@ def main():
             steps_per_epoch=steps_per_epoch,
             epochs=NB_EPOCH,
             verbose=1,
-            callbacks=[tb, early_stopper, csv_logger, checkpointer],
+            callbacks=[tb, early_stopper, csv_logger,
+                       checkpointer],
             validation_data=val_generator,
             validation_steps=VALIDATION_SAMPLE_SIZE/BATCH_SIZE,
             workers=24)

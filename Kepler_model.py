@@ -2,7 +2,7 @@ from keras.layers import Dense, Flatten, Dropout, Input, Permute, CuDNNLSTM, Bat
 from keras.models import Sequential, load_model, Model
 from keras.layers.convolutional import (Conv1D, MaxPooling1D)
 from keras.layers.merge import concatenate
-
+from keras.utils.vis_utils import plot_model
 import environment
 
 
@@ -53,7 +53,9 @@ def build_Kepler_CNN():
     output = Dense(environment.NB_CLASSES, activation='softmax')(hidden4)
 
     model = Model(inputs=input01, outputs=output)
-
-    # summarize layers
     # print(model.summary())
+    # plot_model(model, to_file='model_plot.png',
+    # show_shapes = True, show_layer_names = True)
+    # summarize layers
+
     return model

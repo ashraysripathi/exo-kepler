@@ -2,7 +2,7 @@
 BASE_URL = "http://archive.stsci.edu/pub/kepler/lightcurves"
 
 # CSV file for downloading the training data, and reference to the data labels
-KEPLER_CSV_FILE = "D:/Final_Year_Project/dr24tce.csv"
+KEPLER_CSV_FILE = "D:/Kepler_Download/dr24predict.csv"
 
 # Name and values of the column in the input CSV file to use as training labels.
 LABEL_COLUMN = "av_training_set"

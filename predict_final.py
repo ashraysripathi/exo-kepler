@@ -3,18 +3,33 @@ from keras.optimizers import Adam
 import numpy as np
 import os.path
 import matplotlib.pyplot as plt
+import csv
 
 import Kepler_model
 import preprocess
 import environment
 import get_single_keplerid
 
+# gui imports
+import tkinter as tk
+global category
+global revperiod
+global dist
+global radius
+global widgets
+
+
+ASTRONOMICAL_UNIT = 1.495978707*(10**11)
+EARTH_RADIUS = 6378
+
 
 class tce_struct:
     kepid = 0
     tce_period = 0.0
-    tce_time0bk = 0.0
+    tce_sma = 0.0
+    tce_prad = 0.0
     tce_duration = 0.0
+    tce_time0bk = 0.0
 
 
 def predict_by_kepler_tce(tce):
@@ -135,13 +150,31 @@ def predict_by_kepler_tce(tce):
         predict_result_text = "NTP (non-transiting phenomenon)"
         predict_result_index = 2
     '''
-
-    print("\nKepler ID    = {:9d}".format(tce.kepid))
-    print("tce_period   = {}".format(tce.tce_period))
-    print("tce_time0bk  = {}".format(tce.tce_time0bk))
+    if predict_result[0][0] > 0.5:
+        print("\nKepler ID    = {:9d}".format(tce.kepid))
+        print("Revolutionary Period = {} days".format(tce.tce_period))
+        print("Maximum Dsitance From Star= {} km".format(tce.tce_sma))
+        print("Planetary Radius = {} km".format(tce.tce_prad))
+        revperiod = tce.tce_period
+        dist = tce.tce_sma
+        radius = tce.tce_prad
+        category = "{0:.00%} possibility is a {1:s}".format(
+            predict_result[0][predict_result_index], predict_result_text)
+    if predict_result[0][1] > 0.5:
+        tce.tce_period = "Unavailable"
+        tce.tce_sma = "Unavailable"
+        tce.tce_prad = "Unavailable"
+        print("\nKepler ID    = {:9d}".format(tce.kepid))
+        print("Revolutionary Period = Unavailable")
+        print("Maximum Dsitance From Star= Unavailable")
+        print("Planetary Radius = Unavailable")
+        revperiod = tce.tce_period
+        dist = tce.tce_sma
+        radius = tce.tce_prad
+        category = "{0:.00%} possibility is a {1:s}".format(
+            predict_result[0][predict_result_index], predict_result_text)
 
     # Print the duration in hours value
-    print("tce_duration = {}".format(tce.tce_duration*24))
     # print("tce_duration = {}".format(tce.tce_duration))
 
     print("\n==> Predicted result = {0}".format(predict_result))
@@ -153,33 +186,112 @@ def predict_by_kepler_tce(tce):
         predict_result[0][predict_result_index], predict_result_text))
 
     # fig.show()
+    return revperiod, dist, radius, category
 
 
-def main():
+# gui window
+def close_window():
+    global entry
+    global ID
+    ID = entry.get()
+
     tce = tce_struct()
+    tce.kepid = int(ID)
+    with open(environment.KEPLER_CSV_FILE) as f:
+        reader = csv.DictReader(row for row in f if not row.startswith("#"))
+        for row in reader:
 
-    # tce.kepid = 11442793
-    # tce.tce_period = 331.603
-    # tce.tce_time0bk = 140.48
-    # tce.tce_duration = 14.49
+            keplerid = row["kepid"]
+            keplerid = int(keplerid)
+            if(tce.kepid == keplerid):
 
+                tc_dur = row["tce_duration"]
+                tc_0bk = row["tce_time0bk"]
+                tc_period = row["tce_period"]
+                tc_prad = row["tce_prad"]
+                tc_sma = row["tce_sma"]
+                tce.tce_sma = float(tc_sma)*ASTRONOMICAL_UNIT
+                tce.tce_prad = float(tc_prad)*EARTH_RADIUS
+                tce.tce_period = float(tc_period)
+                tce.tce_time0bk = float(tc_0bk)
+                tce.tce_duration = float(tc_dur)
+    tce.tce_duration /= 24
+    revperiod, dist, radius, category = predict_by_kepler_tce(tce)
+
+    for widget in frame.winfo_children():
+        widget.destroy()
+    cat = tk.Text(frame, height=1, width=40)
+    cat.insert(tk.INSERT, category)
+    cat.configure(state='disabled')
+    cat.pack(fill=tk.X, side='top')
+    rev = tk.Label(frame, text='Revolutionary Period:')
+    rev.pack()
+    entry1 = tk.Text(frame, height=1, width=10)
+    entry1.insert(tk.INSERT, revperiod)
+    entry1.configure(state='disabled')
+    entry1.pack(fill=tk.X)
+    distance = tk.Label(frame, text='Distance from star:')
+    distance.pack()
+    entry2 = tk.Text(frame, height=1, width=10)
+    entry2.insert(tk.INSERT, dist)
+    entry2.configure(state='disabled')
+    entry2.pack(fill=tk.X)
+    rad = tk.Label(frame, text='Radius of planet:')
+    rad.pack()
+    entry3 = tk.Text(frame, height=1, width=10)
+    entry3.insert(tk.INSERT, radius)
+    entry3.configure(state='disabled')
+    entry3.pack(fill=tk.X)
+
+
+window = tk.Tk()
+window.minsize(400, 400)
+label = tk.Label(window, text="Kepler ID")
+label.pack()
+entry = tk.Entry(window, bd=5)
+entry.pack(fill=tk.X, side='top')
+B = tk.Button(window, text="Enter", command=close_window)
+B.pack(fill=tk.X, side='top')
+frame = tk.Frame(window)
+frame.pack(fill=tk.X, side='top')
+window.mainloop()
+
+#tce = tce_struct()
+
+# tce.kepid = 11442793
+# tce.tce_period = 331.603
+# tce.tce_time0bk = 140.48
+# tce.tce_duration = 14.49
+"""
     tce.kepid = 11442793
-    tce.tce_period = 14.44912
-    tce.tce_time0bk = 2.2
-    tce.tce_duration = 2.70408  # in hours, = 0.11267 days
+    with open(environment.KEPLER_CSV_FILE) as f:
+        reader = csv.DictReader(row for row in f if not row.startswith("#"))
+        for row in reader:
 
-    '''
+            keplerid = row["kepid"]
+            keplerid = int(keplerid)
+            if(tce.kepid == keplerid):
+
+                tc_dur = row["tce_duration"]
+                tc_0bk = row["tce_time0bk"]
+                tc_period = row["tce_period"]
+                tc_prad = row["tce_prad"]
+                tc_sma = row["tce_sma"]
+                tce.tce_sma = float(tc_sma)*ASTRONOMICAL_UNIT
+                tce.tce_prad = float(tc_prad)*EARTH_RADIUS
+                tce.tce_period = float(tc_period)
+                tce.tce_time0bk = float(tc_0bk)
+                tce.tce_duration = float(tc_dur)
+"""
+'''
     tce.kepid = 757450
     tce.tce_period = 8.88492
     tce.tce_time0bk = 134.452
     tce.tce_duration = 2.078  # in hours
     '''
-
+"""
     # Convert duration to days
     tce.tce_duration /= 24
 
-    predict_by_kepler_tce(tce)
-
-
-if __name__ == "__main__":
-    main()
+    rp, dis, rad, categ = predict_by_kepler_tce(tce)
+"""
